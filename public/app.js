@@ -58,7 +58,10 @@ document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('cli
   $('#' + b.dataset.vista).classList.add('active');
   b.classList.add('active');
   if (b.dataset.vista === 'notificaciones') cargarNotificaciones();
-  if (b.dataset.vista === 'condiciones') cargarCondiciones();
+  if (b.dataset.vista === 'condiciones') {
+    cargarCondiciones();
+    actualizarMonitoreoExterno();
+  }
 }));
 
 // ---------- Estado general y calendario ----------
@@ -250,21 +253,57 @@ async function cargarCondiciones() {
     h('td', {}, h('span', { class: 'badge ' + (r.estado === 'Óptimo' ? 'ok' : 'warn') }, r.estado)))));
 }
 
+// ---------- Monitoreo Externo en Tiempo Real (Open-Meteo) ----------
+const API_URL = 'https://api.open-meteo.com/v1/forecast?latitude=-34.2464&longitude=-71.3097&current=temperature_2m,relative_humidity_2m';
+
+async function actualizarMonitoreoExterno() {
+  const tempEl = $('#orchid-temp');
+  const humEl = $('#orchid-humidity');
+  const statusEl = $('#api-status');
+  const timerEl = $('#api-timer');
+
+  if (!tempEl || !humEl) return;
+
+  try {
+    statusEl.textContent = 'Actualizando...';
+    statusEl.className = 'badge warn';
+
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error('Respuesta no válida del servidor externo');
+
+    const data = await res.json();
+    tempEl.textContent = `${Number(data.current.temperature_2m).toFixed(1)} °C`;
+    humEl.textContent = `${Number(data.current.relative_humidity_2m).toFixed(1)} %`;
+
+    statusEl.textContent = 'En vivo';
+    statusEl.className = 'badge ok';
+    timerEl.textContent = new Date().toLocaleTimeString();
+  } catch (err) {
+    statusEl.textContent = 'Sin conexión';
+    statusEl.className = 'badge off';
+    console.error('Error al rescatar telemetría externa:', err);
+  }
+}
+
 // ---------- Arranque y actualización automática ----------
 async function iniciar() {
   try {
     await cargarEstado();
     await Promise.all([cargarRiegos(), cargarContacto()]);
+    actualizarMonitoreoExterno();
   } catch (err) {
     mensaje('#msg-riego', 'No se pudo conectar con el servidor: ' + err.message, 'error');
   }
 }
 iniciar();
 
-// Cada 15 s se refresca lo que cambia solo (avisos enviados por el planificador)
+// Intervalo general de la aplicación
 setInterval(async () => {
   try {
     await Promise.all([cargarEstado(), cargarRiegos()]);
     if ($('#notificaciones').classList.contains('active')) await cargarNotificaciones();
   } catch (_) { /* si el servidor no responde, se reintenta en el próximo ciclo */ }
 }, 15000);
+
+// Intervalo de actualización del monitoreo externo (cada 10 segundos)
+setInterval(actualizarMonitoreoExterno, 10000);

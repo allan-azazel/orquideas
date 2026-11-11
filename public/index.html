@@ -119,6 +119,33 @@
 
   <!-- ============ CONDICIONES ============ -->
   <section id="condiciones" class="view">
+    <!-- Módulo de Monitoreo Ambiental Externo -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <h2 style="margin: 0;">Monitoreo en Tiempo Real (Estación Meteorológica)</h2>
+        <span class="badge ok" id="api-status">En vivo</span>
+      </div>
+      
+      <div class="stats">
+        <div class="stat">
+          <span>Temperatura Exterior</span>
+          <strong id="orchid-temp">-- °C</strong>
+          <small>Medición a 2m del suelo</small>
+        </div>
+        <div class="stat">
+          <span>Humedad Relativa Exterior</span>
+          <strong id="orchid-humidity">-- %</strong>
+          <small>Humedad del entorno</small>
+        </div>
+      </div>
+
+      <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; font-size: 0.8rem; color: #888;">
+        <span>Fuente: Open-Meteo API</span>
+        <span>Última sincronización: <b id="api-timer">—</b></span>
+      </div>
+    </div>
+
+    <!-- Sensores locales -->
     <div class="stats" id="stats-condiciones"></div>
     <div class="card">
       <h2>Historial de condiciones ambientales</h2>
